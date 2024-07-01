@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload and Summary Generation</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        #progress {
+            width: 100%;
+            background-color: #f1f1f1;
+        }
+        #progress-bar {
+            width: 0%;
+            height: 30px;
+            background-color: #4caf50;
+            text-align: center;
+            line-height: 30px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Upload File</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" name="file" id="fileInput" required>
+        <button type="submit">Upload</button>
+    </form>
+    <div id="progress" style="display: none;">
+        <div id="progress-bar">0%</div>
+    </div>
+    <div id="uploadStatus"></div>
+    <div id="summary" style="display: none;"></div>
+
+    <script>
+        $(document).ready(function() {
+            const socket = io();
+
+            socket.on('progress', function(data) {
+                $('#progress').show();
+                $('#progress-bar').width(data.progress + '%');
+                $('#progress-bar').text(data.progress + '%');
+                $('#uploadStatus').text(data.message);
+
+                if (data.progress === 100) {
+                    $('#summary').text(data.summary).show();
+                }
+            });
+
+            $('#uploadForm').on('submit', function(e) {
+                e.preventDefault();
+                var formData = new FormData(this);
+
+                $.ajax({
+                    url: '/upload',
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function(response) {
+                        $('#uploadStatus').text(response.message);
+                    },
+                    error: function() {
+                        $('#uploadStatus').text('File upload failed.');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
